@@ -1,7 +1,10 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { AuthService } from './auth.service';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request, } from '@nestjs/common';
 
+import { AuthGuard } from './guards/auth.guard';
+import { AuthService } from './auth.service';
+import { LoginResponse } from './interfaces/login-response.interface';
 import { RegisterUserDto, LoginDto, UpdateAuthDto, CreateUserDto } from './dto';
+import { User } from './entities/user.entity';
 
 @Controller('auth')
 export class AuthController {
@@ -23,9 +26,18 @@ export class AuthController {
     return this.authService.register(registerUserDto);
   }
 
+  @UseGuards(AuthGuard)
   @Get()
-  findAll() {
+  findAll(@Request() req: Request) {
     return this.authService.findAll();
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('/check-token')
+  verifyToken(@Request() req: Request): LoginResponse {
+    const user = req['user'] as User;
+    const token = this.authService.getJwtToken({ id: user._id });
+    return { user, token };
   }
 
   @Get(':id')
